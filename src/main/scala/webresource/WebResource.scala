@@ -32,13 +32,17 @@ object WebResources extends Plugin {
     webResourcesBase := target.value / "webresources",
     resolveWebResources <<= (streams, webResources, webResourcesBase) map {
       (streams, webResources, webResourcesBase) =>
+        def download(file: File, url: URL) = {
+          streams.log.info(s"Downloading ${file.getName}")
+          FileUtils.copyURLToFile(url, file, 10000, 10000)
+          file
+        }
+
         webResources.par.map {
           case (filename, url) => (webResourcesBase / filename) -> new URL(url)
-        }.filterKeys(!_.exists).map {
-          case (file, url) =>
-            streams.log.info(s"Downloading ${file.getName}")
-            FileUtils.copyURLToFile(url, file, 10000, 10000)
-            file
+        }.map {
+          case (file, _) if file.exists => file
+          case (file, url) => download(file, url)
         }.seq.toSeq
     })
 }
