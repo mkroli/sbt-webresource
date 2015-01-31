@@ -6,7 +6,7 @@ Usage
 -----
 In **project/plugins.sbt**:
 ```scala
-addSbtPlugin("com.github.mkroli" % "sbt-webresource" % "0.1")
+addSbtPlugin("com.github.mkroli" % "sbt-webresource" % "0.2")
 ```
 To include files directly in the package configure **build.sbt** as follows:
 ```scala
