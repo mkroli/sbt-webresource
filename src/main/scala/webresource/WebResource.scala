@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Michael Krolikowski
+ * Copyright 2013-2015 Michael Krolikowski
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,11 +38,18 @@ object WebResources extends Plugin {
           file
         }
 
-        webResources.par.map {
+        webResources.map {
           case (filename, url) => (webResourcesBase / filename) -> new URL(url)
-        }.map {
-          case (file, _) if file.exists => file
-          case (file, url) => download(file, url)
+        }.foldLeft(Map[URL, List[File]]()) {
+          case (map, (file, url)) =>
+            map + (url -> (file :: map.getOrElse(url, List())))
+        }.par.flatMap {
+          case (url, filenames) =>
+            val downloaded = filenames.find(_.exists).getOrElse(download(filenames.head, url))
+            filenames.collect {
+              case filename if !filename.exists => FileUtils.copyFile(downloaded, filename)
+            }
+            filenames
         }.seq.toSeq
     })
 }
